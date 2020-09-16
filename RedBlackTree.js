@@ -22,24 +22,24 @@ function shuffle(arr) {
     return arr
 }
 
-function getMaxDepth(root) {
+function getMaxHeight(root) {
     // Root being null means tree doesn't exist.
-    if (!root) return 0;
+    if (!root.key) return 0
 
     // Get the depth of the left and right subtree
     // using recursion.
-    const leftDepth = getMaxDepth(root.left);
-    const rightDepth = getMaxDepth(root.right);
+    const leftDepth = getMaxHeight(root.left)
+    const rightDepth = getMaxHeight(root.right)
 
     // Choose the larger one and add the root to it.
-    if (leftDepth > rightDepth) return leftDepth + 1;
-    else return rightDepth + 1;
+    if (leftDepth > rightDepth) return leftDepth + 1
+    else return rightDepth + 1
 }
 
 class Tree {
     constructor() {
-        this.nil = null
-        this.root = null
+        this.nil = new Node(null)
+        this.root = this.nil
     }
 }
 
@@ -102,14 +102,14 @@ function insert (T, z) {
     z.left = T.nil
     z.right = T.nil
     z.color = 'red'
-    fix(T, z)
+    addFix(T, z)
 }
 
-function fix (T, z) {
+function addFix (T, z) {
     while(z.parent && z.parent.color === 'red') {
         if(z.parent === z.parent.parent.left) {
             let y = z.parent.parent.right
-            if (y && y.color === 'red') {
+            if (y.color === 'red') {
                 z.parent.color = 'black'
                 y.color = 'black'
                 z.parent.parent.color = 'red'
@@ -126,7 +126,7 @@ function fix (T, z) {
             }
         } else {
             let y = z.parent.parent.left
-            if (y && y.color === 'red') {
+            if (y.color === 'red') {
                 z.parent.color = 'black'
                 y.color = 'black'
                 z.parent.parent.color = 'red'
@@ -146,7 +146,93 @@ function fix (T, z) {
     T.root.color = 'black'
 }
 
+function min (node) {
+    while(node.left !== null) {
+        node = node.left
+    }
+    return node
+}
+
+function getSuccessor(x) {
+    if (x.right !== null) return min (x.right)
+    let y = x.parent
+    while (y !== null && x === y.right) {
+        x = y
+        y = y.parent
+    }
+    return y
+}
+
 // deletion은 보류
+function deleteNode(T, z) {
+    let x
+    let y
+    if(z.left === T.nil || z.right === T.nil) y = z
+    else y = getSuccessor(z)
+    if (y.left !== T.nil) x = y.left
+    else x = y.right
+    x.parent = y.parent
+    if(y.parent === T.nil) T.root = x
+    else {
+        if (y === y.parent.left) y.parent.left = x
+        else y.parent.right = x
+    }
+    if (y !== z) z.key = y.key
+    if (y.color === 'black') deleteFix(T, x)
+    return y
+}
+
+function deleteFix(T, x) {
+    while(x !== T.root && T.color === 'black') {
+        if (x === x.parent.left) {
+            let w = x.parent.right
+            if (w.color === 'red') {
+                w.color = 'black'
+                w.parent.color = 'black'
+                leftRotate(T, x.parent)
+            }
+            if (w.left.color === 'black' && w.right.color === 'black') {
+                w.color = 'red'
+                x = x.parent
+            } else {
+                if (w.right.color === 'black') {
+                    w.left.color = 'black'
+                    w.color = 'red'
+                    rightRotate(T, w)
+                    w = x.parent.right
+                }
+                w.color = x.parent.color
+                x.parent.color = 'black'
+                w.right.color = 'black'
+                leftRotate(T, x.parent)
+                x = T.root
+            }
+        } else {
+            let w = x.parent.left
+            if (w.color === 'red') {
+                w.color = 'black'
+                w.parent.color = 'black'
+                rightRotate(T, x.parent)
+            }
+            if (w.right.color === 'black' && w.left.color === 'black') {
+                w.color = 'red'
+                x = x.parent
+            } else {
+                if (w.left.color === 'black') {
+                    w.right.color = 'black'
+                    w.color = 'red'
+                    leftRotate(T, w)
+                    w = x.parent.left
+                }
+                w.color = x.parent.color
+                x.parent.color = 'black'
+                w.left.color = 'black'
+                rightRotate(T, x.parent)
+                x = T.root
+            }
+        }
+    }
+}
 
 const tree = new Tree()
 // insert(tree, new Node(11))
@@ -174,18 +260,16 @@ const tree = new Tree()
 // console.log(tree.root.left.color)
 // console.log(tree.root.right.color)
 
-const valArray = shuffle([1, 3, 4, 5, 6])
-console.log(valArray)
+const valArray = [1, 3, 4, 5, 6]// shuffle([1, 3, 4, 5, 6])
+
 valArray.forEach((val) => {
     insert(tree, new Node(val))
 })
-// insert(tree, new Node(5))
-// insert(tree, new Node(4))
-// insert(tree, new Node(6))
-// insert(tree, new Node(3))
-// insert(tree, new Node(1))
 
-// console.log(tree)
+// console.log(getMaxHeight(tree.root))
 // console.log(tree.root)
-console.log(getMaxDepth(tree.root))
-// console.log(tree.root.left.left)
+console.log(tree.root.right.right.key)
+deleteNode(tree, tree.root.right.right)
+console.log(tree.root.right.right.key)
+// console.log(getMaxHeight(tree.root))
+// console.log(tree.root.right.right.key)
